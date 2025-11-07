@@ -1,6 +1,7 @@
 // routes/medicos.js
 import express from 'express';
 import db from '../db.js';
+import { checkApiKey } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -36,7 +37,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // [C]reate - Crear un nuevo médico
-router.post('/', async (req, res) => {
+router.post('/', checkApiKey, async (req, res) => {
     const { nombre, especialidad } = req.body;
     if (!nombre || !especialidad) {
         return res.status(400).json({ message: 'Faltan campos obligatorios: nombre y especialidad' });
@@ -57,7 +58,7 @@ router.post('/', async (req, res) => {
 });
 
 // [U]pdate - Actualizar un médico por ID
-router.put('/:id', async (req, res) => {
+router.put('/:id', checkApiKey, async (req, res) => {
     const { id } = req.params;
     const { nombre, especialidad } = req.body;
 
@@ -87,7 +88,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // [D]elete - Eliminar un médico por ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkApiKey, async (req, res) => {
     const { id } = req.params;
 
     try {

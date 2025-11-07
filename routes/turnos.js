@@ -1,12 +1,14 @@
 // routes/turnos.js
 import express from 'express';
 import db from '../db.js'; // Importa el pool de conexiones
+import { checkApiKey } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // ------------------------------------------------------------------
 // ⭐ OPERACIONES CRUD para 'turnos'
 // ------------------------------------------------------------------
+
 
 // [R]ead - Obtener todos los turnos
 router.get('/', async (req, res) => {
@@ -38,7 +40,7 @@ router.get('/:id', async (req, res) => {
 
 
 // [C]reate - Crear un nuevo turno
-router.post('/', async (req, res) => {
+router.post('/', checkApiKey, async (req, res) => {
     const { medico_id, paciente_id, fecha, hora, estado } = req.body;
     
     // Validación básica
@@ -64,7 +66,7 @@ router.post('/', async (req, res) => {
 });
 
 // [U]pdate - Actualizar un turno existente
-router.put('/:id', async (req, res) => {
+router.put('/:id', checkApiKey, async (req, res) => {
     const { id } = req.params;
     const { medico_id, paciente_id, fecha, hora, estado } = req.body;
 
@@ -102,7 +104,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // [D]elete - Eliminar un turno
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkApiKey, async (req, res) => {
     const { id } = req.params;
 
     try {

@@ -1,7 +1,7 @@
 // routes/pacientes.js
 import express from 'express';
 import db from '../db.js';
-
+import { checkApiKey } from '../middleware/auth.js';
 const router = express.Router();
 
 // ------------------------------------------------------------------
@@ -37,7 +37,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // [C]reate - Crear un nuevo paciente
-router.post('/', async (req, res) => {
+router.post('/', checkApiKey, async (req, res) => {
     const { nombre, dni, email } = req.body;
     if (!nombre || !dni) {
         return res.status(400).json({ message: 'Faltan campos obligatorios: nombre y dni' });
@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
 });
 
 // [U]pdate - Actualizar un paciente por ID
-router.put('/:id', async (req, res) => {
+router.put('/:id', checkApiKey, async (req, res) => {
     const { id } = req.params;
     const { nombre, dni, email } = req.body;
 
@@ -95,7 +95,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // [D]elete - Eliminar un paciente por ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkApiKey, async (req, res) => {
     const { id } = req.params;
 
     try {
