@@ -1,8 +1,9 @@
 // server.js
 import express from 'express';
-import 'dotenv/config'; 
+import 'dotenv/config';
 
-import checkApiKey from './middlewares/checkApiKey.js';
+// CORRECTO → carpeta "middleware" y archivo "auth.js"
+import { checkApiKey } from './middleware/auth.js';
 
 import turnosRoutes from './routes/turnos.js';
 import medicosRoutes from './routes/medicos.js';
@@ -24,7 +25,7 @@ app.get('/', (req, res) => {
     res.send('Servidor de Sistema de Turnos API');
 });
 
-// Rutas protegidas con API KEY
+// Rutas protegidas
 app.use('/api/turnos', checkApiKey, turnosRoutes);
 app.use('/api/medicos', checkApiKey, medicosRoutes);
 app.use('/api/pacientes', checkApiKey, pacientesRoutes);
@@ -43,4 +44,3 @@ console.log("🔍 Variables cargadas:", {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`📡 Servidor corriendo en puerto ${PORT}`);
 });
-
