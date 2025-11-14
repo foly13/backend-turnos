@@ -33,12 +33,13 @@ app.use('/api/disponibilidad', checkApiKey, disponibilidadRoutes);
 
 // Log de variables para debug
 console.log("🔍 Variables cargadas:", {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    pass: process.env.DB_PASSWORD ? "OK" : "NO",
-    db: process.env.DB_DATABASE,
-    port: process.env.DB_PORT
+    host: process.env.MYSQLHOST,
+    user: process.env.MYSQLUSER,
+    pass: process.env.MYSQLPASSWORD ? "OK" : "NO",
+    db: process.env.MYSQLDATABASE,
+    port: process.env.MYSQLPORT
 });
+
 
 // Iniciar servidor
 app.listen(PORT, '0.0.0.0', () => {
