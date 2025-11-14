@@ -3,16 +3,7 @@ import mysql from 'mysql2/promise';
 import 'dotenv/config'; // Carga las variables de entorno
 
 // Crea el pool de conexiones (más eficiente que una conexión simple)
-const pool = mysql.createPool({
-    host: process.env.MYSQLHOST,
-    user: process.env.MYSQLUSER,
-    password: process.env.MYSQLPASSWORD,
-    database: process.env.MYSQLDATABASE,
-    port: process.env.MYSQLPORT,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+const pool = mysql.createPool(process.env.MYSQL_URL);
 
 // Prueba la conexión al iniciar
 pool.getConnection()
