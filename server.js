@@ -20,6 +20,15 @@ app.use('/api/turnos', turnosRoutes); // Usa el prefijo /api/turnos para las rut
 app.use('/api/medicos', medicosRoutes);
 app.use('/api/pacientes', pacientesRoutes);
 app.use('/api/disponibilidad', disponibilidadRoutes);
+//prueba
+console.log("🔍 Variables cargadas:", {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    pass: process.env.DB_PASSWORD ? "OK" : "NO",
+    db: process.env.DB_DATABASE,
+    port: process.env.DB_PORT
+  });
+  
 
 // Iniciar el servidor
 app.listen(PORT, '0.0.0.0', () => {
