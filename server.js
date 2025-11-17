@@ -4,7 +4,7 @@ import 'dotenv/config';
 
 // CORRECTO → carpeta "middleware" y archivo "auth.js"
 import { checkApiKey } from './middleware/auth.js';
-
+import excepcionesRoutes from './routes/excepciones.js';
 import turnosRoutes from './routes/turnos.js';
 import medicosRoutes from './routes/medicos.js';
 import pacientesRoutes from './routes/pacientes.js';
@@ -26,10 +26,12 @@ app.get('/', (req, res) => {
 });
 
 // Rutas protegidas
+app.use('/api/excepciones', checkApiKey, excepcionesRoutes);
 app.use('/api/turnos', checkApiKey, turnosRoutes);
 app.use('/api/medicos', checkApiKey, medicosRoutes);
 app.use('/api/pacientes', checkApiKey, pacientesRoutes);
 app.use('/api/disponibilidad', checkApiKey, disponibilidadRoutes);
+
 
 // Log de variables para debug
 console.log("🔍 Variables cargadas:", {
