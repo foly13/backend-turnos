@@ -9,6 +9,7 @@ import turnosRoutes from './routes/turnos.js';
 import medicosRoutes from './routes/medicos.js';
 import pacientesRoutes from './routes/pacientes.js';
 import disponibilidadRoutes from './routes/disponibilidad.js';
+import disponibilidadesRoutes from './routes/disponibilidades.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +32,7 @@ app.use('/api/turnos', checkApiKey, turnosRoutes);
 app.use('/api/medicos', checkApiKey, medicosRoutes);
 app.use('/api/pacientes', checkApiKey, pacientesRoutes);
 app.use('/api/disponibilidad', checkApiKey, disponibilidadRoutes);
+app.use('/api/disponibilidades', checkApiKey, disponibilidadesRoutes);
 
 
 // Log de variables para debug
