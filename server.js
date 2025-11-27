@@ -10,6 +10,8 @@ import medicosRoutes from './routes/medicos.js';
 import pacientesRoutes from './routes/pacientes.js';
 import disponibilidadRoutes from './routes/disponibilidad.js';
 import disponibilidadesRoutes from './routes/disponibilidades.js';
+import { Telegraf } from 'telegraf'; 
+import axios from 'axios';           // NECESARIO para llamadas internas
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,6 +36,13 @@ app.use('/api/pacientes', checkApiKey, pacientesRoutes);
 app.use('/api/disponibilidad', checkApiKey, disponibilidadRoutes);
 app.use('/api/disponibilidades', checkApiKey, disponibilidadesRoutes);
 
+// Inicialización de Telegraf
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const bot = new Telegraf(BOT_TOKEN); // Pasa el token del .env
+
+// 📢 RUTA DEL WEBHOOK DE TELEGRAM
+// Este endpoint recibe todos los mensajes del bot.
+app.post('/webhook/telegram', bot.webhookCallback('/webhook/telegram')); // Telegraf lo maneja internamente
 
 // Log de variables para debug
 console.log("🔍 Variables cargadas:", {
@@ -44,6 +53,8 @@ console.log("🔍 Variables cargadas:", {
     port: process.env.MYSQLPORT
 });
 
+// IMPORTANTE: Debemos importar la lógica del bot *después* de inicializar 'bot'
+import './routes/telegramLogic.js'; // ⬅️ Crearemos este archivo ahora
 
 // Iniciar servidor
 app.listen(PORT, '0.0.0.0', () => {
