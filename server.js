@@ -12,6 +12,8 @@ import disponibilidadRoutes from './routes/disponibilidad.js';
 import disponibilidadesRoutes from './routes/disponibilidades.js';
 import { Telegraf } from 'telegraf'; 
 import axios from 'axios';           // NECESARIO para llamadas internas
+// ⬅️ ¡CORRECCIÓN CLAVE: Importar la función de registro!
+import { registerBotHandlers } from './routes/telegramLogic.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,6 +44,8 @@ export const bot = new Telegraf(BOT_TOKEN); // ⬅️ ¡CORRECCIÓN CLAVE: SE EX
 // 📢 RUTA DEL WEBHOOK DE TELEGRAM
 // Este endpoint recibe todos los mensajes del bot.
 app.post('/webhook/telegram', bot.webhookCallback('/webhook/telegram')); // Telegraf lo maneja internamente
+// ⬅️ ¡CORRECCIÓN CLAVE: Llamar a la función DESPUÉS de crear 'bot'!
+registerBotHandlers(bot);
 
 // Log de variables para debug
 console.log("🔍 Variables cargadas:", {
@@ -52,8 +56,6 @@ console.log("🔍 Variables cargadas:", {
     port: process.env.MYSQLPORT
 });
 
-// IMPORTANTE: Se importa la lógica del bot *después* de inicializar 'bot'
-import './routes/telegramLogic.js'; 
 
 // Iniciar servidor
 app.listen(PORT, '0.0.0.0', () => {
