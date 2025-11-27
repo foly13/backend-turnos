@@ -7,7 +7,6 @@ import { bot } from '../server.js';
 import { getChatState, updateChatState } from '../services/chatState.js';
 // Asegúrate de tener estas funciones importadas
 import { findPacienteByDni, createPaciente } from '../services/pacienteService.js'; 
-import { getMedicosByEspecialidad } from '../services/medicoService.js';
 import { getTodasEspecialidades, getMedicosByEspecialidad } from '../services/medicoService.js';
 // import { getDisponibilidad } from '../services/disponibilidadService.js'; // Necesitarás este pronto
 
