@@ -37,19 +37,6 @@ export async function getTurnosActivosByPaciente(pacienteId) {
     return turnos;
 }
 
-/**
- * Actualiza la fecha y hora de un turno existente (usado para Modificar Turno).
- */
-export async function updateTurno(turnoId, nuevaFecha, nuevaHora) {
-    // Solo actualiza fecha y hora, ya que Modificar Turno mantiene el paciente/médico.
-    const query = `
-        UPDATE turnos 
-        SET fecha = ?, hora = ?
-        WHERE id = ? AND estado <> 'cancelado'
-    `;
-    const [result] = await pool.query(query, [nuevaFecha, nuevaHora, turnoId]);
-    return result;
-}
 
 /**
  * Cambia el estado de un turno a 'cancelado' (usado para Cancelar Turno).

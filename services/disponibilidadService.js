@@ -138,3 +138,24 @@ export async function getDisponibilidadProximosDias(medicoId) {
     }
     return resultados;
 }
+/**
+ * Obtiene solo los días (fechas únicas) que tienen disponibilidad para un médico.
+ * Esto es para que el usuario elija primero el día.
+ */
+export async function getDiasDisponiblesByMedico(medicoId) {
+    const query = `
+        SELECT DISTINCT 
+            DATE_FORMAT(dia, '%Y-%m-%d') AS fecha
+        FROM 
+            disponibilidad_detalles dd
+        JOIN 
+            disponibilidad d ON dd.disponibilidad_id = d.id
+        WHERE 
+            d.medico_id = ?
+            AND dd.dia >= CURDATE()
+        ORDER BY 
+            dd.dia ASC
+    `;
+    const [rows] = await pool.query(query, [medicoId]);
+    return rows;
+}
