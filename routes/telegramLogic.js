@@ -10,7 +10,8 @@ import { findPacienteByDni, createPaciente } from '../services/pacienteService.j
 import { getTodasEspecialidades, getMedicosByEspecialidad } from '../services/medicoService.js';
 // import { getDisponibilidad } from '../services/disponibilidadService.js'; // Necesitarás este pronto
 import { getDisponibilidadProximosDias } from '../services/disponibilidadService.js'; 
-import { createTurno } from '../services/turnoService.js'; // Asumiendo que creaste este archivo
+// ⬅️ Importar las nuevas funciones de turno
+import { createTurno, getTurnosActivosByPaciente, updateTurno, cancelTurno } from '../services/turnoService.js';
 const mainMenu = () => {
     return '¿Qué desea hacer?\n1. Solicitar Turno\n2. Modificar Turno\n3. Cancelar Turno';
 };
@@ -22,7 +23,7 @@ export function registerBotHandlers(bot) {
     bot.start(async (ctx) => {
         const chatID = ctx.chat.id;
         await updateChatState(chatID, { paso_actual: 1, data: {} }); 
-        await ctx.reply('¡Hola! Bienvenido al Sistema de Turnos. Por favor, ingrese su **DNI** para empezar.');
+        await ctx.reply('¡Hola! Bienvenido al Sistema de Turnos. Por favor, ingrese su *DNI* para empezar.');
     });
 
     // --- LÓGICA CENTRAL DE TEXTO ---
@@ -42,10 +43,10 @@ export function registerBotHandlers(bot) {
 
                 if (paciente) {
                     await updateChatState(chatID, { paso_actual: 2, data: { ...data, paciente_id: paciente.id, nombre: paciente.nombre } });
-                    await ctx.reply(`¡Hola, **${paciente.nombre}**! ${mainMenu()}`);
+                    await ctx.reply(`¡Hola, *${paciente.nombre}*! ${mainMenu()}`);
                 } else {
                     await updateChatState(chatID, { paso_actual: 99, data: { ...data, dni_nuevo: dni } });
-                    await ctx.reply(`❌ DNI ${dni} no encontrado. Ingrese su **Nombre y Apellido** para registrarse.`);
+                    await ctx.reply(`❌ DNI ${dni} no encontrado. Ingrese su *Nombre y Apellido* para registrarse.`);
                 }
             }
             
@@ -56,7 +57,7 @@ export function registerBotHandlers(bot) {
                 const nuevoPacienteId = await createPaciente(nombreCompleto, dniNuevo);
 
                 await updateChatState(chatID, { paso_actual: 2, data: { paciente_id: nuevoPacienteId, nombre: nombreCompleto } });
-                await ctx.reply(`✅ ¡Registro exitoso, **${nombreCompleto}**! ${mainMenu()}`);
+                await ctx.reply(`✅ ¡Registro exitoso, *${nombreCompleto}*! ${mainMenu()}`);
             }
 
            // --- PASO 2: ESPERANDO OPCIÓN DEL MENÚ ---
@@ -159,7 +160,7 @@ else if (paso === 4) {
     const disponibilidadDias = await getDisponibilidadProximosDias(medicoId); 
     
     if (disponibilidadDias.length > 0) {
-        let listaDisp = `Horarios disponibles para el Dr/a. **${medicoNombre}**. Por favor, elija un **número**:\n`;
+        let listaDisp = `Horarios disponibles para el Dr/a. *${medicoNombre}*. Por favor, elija un **número**:\n`;
         const turnosMap = {};
         let contador = 1;
 
@@ -223,6 +224,117 @@ else if (paso === 5) {
     } catch (error) {
         console.error('❌ ERROR al crear el turno:', error);
         await ctx.reply('❌ Hubo un error al intentar reservar el turno. Por favor, intente de nuevo o escriba /start.');
+        await updateChatState(chatID, { paso_actual: 0, data: {} }); 
+    }
+}// --- PASO 6: ESPERANDO SELECCIÓN DE TURNO A MODIFICAR ---
+else if (paso === 6) {
+    const numTurno = parseInt(mensaje);
+    const turnosActivosMap = data.turnos_activos_map;
+
+    if (isNaN(numTurno) || !turnosActivosMap || !turnosActivosMap[numTurno]) {
+        await ctx.reply('❌ Por favor, ingrese un número de turno válido de la lista.');
+        return;
+    }
+
+    const turnoSeleccionado = turnosActivosMap[numTurno];
+    const medicoId = turnoSeleccionado.medico_id;
+    const turnoId = turnoSeleccionado.id;
+    const medicoNombre = turnoSeleccionado.medico_nombre;
+
+    // 1. Buscar nueva disponibilidad para el médico
+    const disponibilidadDias = await getDisponibilidadProximosDias(medicoId); 
+    
+    if (disponibilidadDias.length > 0) {
+        let listaDisp = `Modificando turno con el *Dr/a. ${medicoNombre}*. Elija el nuevo **número** de horario:\n`;
+        const nuevaDispMap = {};
+        let contador = 1;
+
+        disponibilidadDias.forEach(dia => {
+            dia.horarios.forEach(hora => {
+                const fechaHoraStr = `${dia.diaSemana} ${dia.fecha} - ${hora}`; 
+                listaDisp += `${contador}. ${fechaHoraStr}\n`;
+                
+                // Guardamos el nuevo objeto de fecha/hora
+                nuevaDispMap[contador] = { fecha: dia.fecha, hora: hora }; 
+                contador++;
+            });
+        });
+
+        await updateChatState(chatID, { 
+            paso_actual: 7, // Nuevo Paso: Esperando la nueva hora
+            data: { 
+                ...data, 
+                turno_id_modificar: turnoId, // Guardamos el ID del turno a actualizar
+                medico_id: medicoId,
+                nueva_disp_map: nuevaDispMap // Mapa de nuevas opciones
+            }
+        });
+        
+        await ctx.reply(listaDisp);
+        
+    } else {
+        await ctx.reply(`❌ El médico seleccionado no tiene nuevos horarios disponibles. Escriba /start.`);
+        await updateChatState(chatID, { paso_actual: 0, data: {} }); 
+    }
+}
+
+// --- PASO 7: ESPERANDO NUEVA SELECCIÓN DE HORARIO ---
+else if (paso === 7) {
+    const numNuevaDisp = parseInt(mensaje);
+    const nuevaDispMap = data.nueva_disp_map;
+    
+    if (isNaN(numNuevaDisp) || !nuevaDispMap || !nuevaDispMap[numNuevaDisp]) {
+        await ctx.reply('❌ Por favor, ingrese un número de horario válido de la lista anterior.');
+        return;
+    }
+
+    const turnoId = data.turno_id_modificar;
+    const nuevaSeleccion = nuevaDispMap[numNuevaDisp];
+    const nuevaFecha = nuevaSeleccion.fecha;
+    const nuevaHora = nuevaSeleccion.hora;
+
+    try {
+        // 1. Ejecutar la modificación en la DB
+        await updateTurno(turnoId, nuevaFecha, nuevaHora); 
+        
+        // 2. Finalizar
+        await updateChatState(chatID, { paso_actual: 0, data: {} }); 
+        
+        await ctx.reply(`✅ Turno *${turnoId}* modificado con éxito para el ${nuevaFecha} a las ${nuevaHora}. Escribe /start para comenzar de nuevo.`);
+
+    } catch (error) {
+        console.error('❌ ERROR al modificar el turno:', error);
+        await ctx.reply('❌ Hubo un error al intentar modificar el turno. Por favor, intente de nuevo o escriba /start.');
+        await updateChatState(chatID, { paso_actual: 0, data: {} }); 
+    }
+}
+// --- PASO 8: ESPERANDO SELECCIÓN DE TURNO PARA CANCELACIÓN (¡NUEVO!) ---
+else if (paso === 8) {
+    const numTurno = parseInt(mensaje);
+    const turnosActivosMap = data.turnos_activos_map;
+
+    if (isNaN(numTurno) || !turnosActivosMap || !turnosActivosMap[numTurno]) {
+        await ctx.reply('❌ Por favor, ingrese un número de turno válido de la lista.');
+        return;
+    }
+
+    const turnoSeleccionado = turnosActivosMap[numTurno];
+    const turnoId = turnoSeleccionado.id;
+    const medicoNombre = turnoSeleccionado.medico_nombre;
+    const { fecha, hora } = turnoSeleccionado;
+
+    try {
+        // 1. Ejecutar la cancelación en la DB
+        await cancelTurno(turnoId); 
+        
+        // 2. Finalizar
+        await updateChatState(chatID, { paso_actual: 0, data: {} }); 
+        
+        await ctx.reply(`✅ El turno con el *Dr/a. ${medicoNombre}* para el ${fecha} a las ${hora} ha sido **CANCELADO** con éxito. Escribe /start para comenzar de nuevo.`);
+
+    } catch (error) {
+        console.error('❌ ERROR al cancelar el turno:', error);
+        await ctx.reply('❌ Hubo un error al intentar cancelar el turno. Por favor, intente de nuevo o escriba /start.');
         await updateChatState(chatID, { paso_actual: 0, data: {} }); 
     }
 }
