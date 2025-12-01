@@ -1,6 +1,6 @@
 // services/disponibilidadService.js
 
-import { pool } from '../db.js';
+import pool from '../db.js';
 
 // Duración de cada turno en minutos
 const DURACION_TURNO_MINUTOS = 30; 
