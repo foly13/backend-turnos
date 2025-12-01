@@ -102,13 +102,17 @@ else if (paso === 2) {
         }
 
         // Se usa el mismo formato de listado para ambas acciones
-        let listaTurnos = `Sus turnos activos. Elija el **número** del turno que desea **${accion}**:\n\n`;
+        let listaTurnos = `Sus turnos activos. Elija el número del turno que desea ${accion}:\n\n`;
         const turnosActivosMap = {};
         
         turnosActivos.forEach((turno, index) => {
             const num = index + 1;
-            // Aquí se corrigió la negrita para que use solo * para el nombre del médico
-            listaTurnos += `${num}. *${turno.medico_nombre}* (${turno.especialidad}) - ${turno.fecha} ${turno.hora.substring(0, 5)}\n`;
+           // ⬅️ CORRECCIÓN CLAVE DE FECHA/HORA: Aseguramos que solo mostramos la fecha (turno.fecha) y 
+            // la hora con solo minutos (turno.hora.substring(0, 5)).
+            const fechaHoraDisplay = `${turno.fecha} ${turno.hora.substring(0, 5)}`; 
+            
+            // Formato: 1. *Dra. López* (Clínica Médica) - 2025-12-03 15:00
+            listaTurnos += `${num}. *${turno.medico_nombre}* (${turno.especialidad}) - ${fechaHoraDisplay}\n`;
             
             // Guardamos todos los datos relevantes para el siguiente paso
             turnosActivosMap[num] = {
@@ -295,7 +299,7 @@ else if (paso === 6) {
                 turno_detalles_final: turnoSeleccionado // Guardamos los detalles para el mensaje final
             } 
         });
-        await ctx.reply(`Confirmación: ¿Desea realmente **CANCELAR** el turno con el *Dr/a. ${medicoNombre}* para el ${turnoSeleccionado.fecha} a las ${turnoSeleccionado.hora}? Responda **SÍ** para confirmar.`);
+        await ctx.reply(`Confirmación: ¿Desea realmente CANCELAR el turno con el Dr/a. ${medicoNombre} para el ${turnoSeleccionado.fecha} a las ${turnoSeleccionado.hora}? Responda SÍ para confirmar.`);
     } 
     
     // 2. SI LA ACCIÓN ES MODIFICAR (Paso 7)
