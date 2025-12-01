@@ -1,4 +1,5 @@
 // routes/telegramLogic.js
+/// routes/telegramLogic.js
 // Lógica que se registra en el bot (importado indirectamente a través de server.js)
 
 // ⬅️ ¡CORRECCIÓN CLAVE: Importar la instancia activa del bot!
@@ -10,7 +11,8 @@ import { findPacienteByDni, createPaciente } from '../services/pacienteService.j
 import { getTodasEspecialidades, getMedicosByEspecialidad } from '../services/medicoService.js';
 // ⬅️ Importar las nuevas funciones de turno (se quita updateTurno)
 import { createTurno, getTurnosActivosByPaciente, cancelTurno } from '../services/turnoService.js'; 
-import { getDisponibilidadProximosDias, getDiasDisponiblesByMedico } from '../services/disponibilidadService.js';
+// 🚨 CORRECCIÓN CLAVE: Se añade la importación de la función para obtener horarios por día
+import { getDisponibilidadProximosDias, getDiasDisponiblesByMedico, getDisponibilidadByMedicoAndFecha } from '../services/disponibilidadService.js';
 
 // Se mantiene esta función, pero cambiará su uso
 const mainMenu = () => {
@@ -90,7 +92,7 @@ else if (paso === 2) {
         }
 
     } 
-    // 🚨 Opción 2: Ver Turnos Activos (Antes Modificar Turno)
+    // 🚨 Opción 2 y 3: Ver Turnos Activos y Eliminar Turno
     else if (mensaje === '2' || mensaje === '3') {
         // Si es '2' -> VER (no cambia estado), si es '3' -> ELIMINAR (cambia a paso 6)
         const accion = mensaje === '2' ? 'VER' : 'ELIMINAR'; 
@@ -255,12 +257,9 @@ else if (paso === 4) {
 
     const fechaSeleccionada = diasDispMap[numDia];
     
-    // ⬅️ Obtener los horarios disponibles SÓLO para la fecha seleccionada
-    // Se asume que tienes esta función disponible
-    // const horarios = await getDisponibilidadByMedicoAndFecha(medicoId, fechaSeleccionada); 
-    const horarios = await getDisponibilidadProximosDias(medicoId, fechaSeleccionada); // Asumimos esta función
-
-        
+    // 🚨 CORRECCIÓN CLAVE: Usamos la función de disponibilidad correcta importada
+    const horarios = await getDisponibilidadByMedicoAndFecha(medicoId, fechaSeleccionada); 
+    
     if (horarios && horarios.length > 0) {
         let listaHorarios = `Día ${fechaSeleccionada}. Elija el *número* del **horario**:\n`;
         const horariosMap = {};
