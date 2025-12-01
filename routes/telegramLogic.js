@@ -9,7 +9,8 @@ import { getChatState, updateChatState } from '../services/chatState.js';
 import { findPacienteByDni, createPaciente } from '../services/pacienteService.js'; 
 import { getTodasEspecialidades, getMedicosByEspecialidad } from '../services/medicoService.js';
 // import { getDisponibilidad } from '../services/disponibilidadService.js'; // Necesitarás este pronto
-
+import { getDisponibilidadProximosDias } from '../services/disponibilidadService.js'; 
+import { createTurno } from '../services/turnoService.js'; // Asumiendo que creaste este archivo
 const mainMenu = () => {
     return '¿Qué desea hacer?\n1. Solicitar Turno\n2. Modificar Turno\n3. Cancelar Turno';
 };
@@ -141,7 +142,7 @@ else if (paso === 3) {
     }
 }
     
-// --- PASO 4: ESPERANDO ID DEL MÉDICO (Modificado) ---
+// --- PASO 4: ESPERANDO ID DEL MÉDICO (¡IMPLEMENTACIÓN REAL DE DISPONIBILIDAD!) ---
 else if (paso === 4) {
     const medicoId = parseInt(mensaje);
     const medicosMap = data.medicos_map;
@@ -151,38 +152,82 @@ else if (paso === 4) {
         await ctx.reply('❌ Por favor, ingrese un número ID de médico válido de la lista anterior.');
         return;
     }
+
+    const medicoNombre = medicosMap[medicoId];
     
-    // 2. Buscar Disponibilidad (Esta parte sigue con la simulación)
-    // Debes reemplazar esta simulación con tu llamada a getDisponibilidad(medicoId) REAL
+    // 2. Obtener Disponibilidad REAL para los próximos 7 días
+    const disponibilidadDias = await getDisponibilidadProximosDias(medicoId); 
     
-    const disponibilidad = [
-        'Lunes 2 de Dic - 09:00',
-        'Martes 3 de Dic - 11:00',
-        'Miércoles 4 de Dic - 15:30'
-    ];
-    
-    if (disponibilidad.length > 0) {
-        let listaDisp = `Horarios disponibles para el Dr/a. ${medicosMap[medicoId]}. Ingrese la fecha y hora (Ej: 2025-12-03 11:00):\n`;
-        disponibilidad.forEach(disp => {
-            listaDisp += `• ${disp}\n`;
+    if (disponibilidadDias.length > 0) {
+        let listaDisp = `Horarios disponibles para el Dr/a. **${medicoNombre}**. Por favor, elija un **número**:\n`;
+        const turnosMap = {};
+        let contador = 1;
+
+        disponibilidadDias.forEach(dia => {
+            dia.horarios.forEach(hora => {
+                // Muestra: 1. Lunes 2025-12-01 - 09:00
+                const fechaHoraStr = `${dia.diaSemana} ${dia.fecha} - ${hora}`; 
+                listaDisp += `${contador}. ${fechaHoraStr}\n`;
+                
+                // Guardamos el objeto completo del turno para el Paso 5
+                turnosMap[contador] = { fecha: dia.fecha, hora: hora }; 
+                contador++;
+            });
         });
-        
-        // 3. Guarda el ID del médico y avanza al paso 5 (Esperando Fecha/Hora)
+
+        // 3. Guarda el ID del médico y el mapa de turnos, y avanza al paso 5
         await updateChatState(chatID, { 
             paso_actual: 5, 
-            data: { ...data, medico_id: medicoId } // data ya tiene paciente_id y especialidad
+            data: { 
+                ...data, 
+                medico_id: medicoId, // Ya tenemos paciente_id y especialidad
+                turnos_map: turnosMap // Guardamos el mapa de turnos disponibles
+            }
         });
         
         await ctx.reply(listaDisp);
         
     } else {
-        // Si no hay horarios disponibles, regresamos al paso de especialidad
-        await updateChatState(chatID, { paso_actual: 3, data: { ...data, medicos_map: undefined } }); // Limpiamos el mapa de médicos y volvemos a pedir especialidad
-        await ctx.reply(`❌ El médico seleccionado no tiene horarios disponibles. Por favor, elija otra especialidad o /start.`);
+        // Si no hay horarios disponibles
+        await updateChatState(chatID, { paso_actual: 3, data: data }); 
+        await ctx.reply(`❌ El médico ${medicoNombre} no tiene horarios disponibles en los próximos días. Elija otra especialidad o /start.`);
+    }
+}
+
+// --- PASO 5: ESPERANDO SELECCIÓN FINAL DE TURNO POR NÚMERO (¡NUEVO!) ---
+else if (paso === 5) {
+    const numTurno = parseInt(mensaje);
+    const turnosMap = data.turnos_map;
+    
+    // 1. Validar la selección del turno
+    if (isNaN(numTurno) || !turnosMap || !turnosMap[numTurno]) {
+        await ctx.reply('❌ Por favor, ingrese un número de turno válido de la lista anterior.');
+        return;
+    }
+
+    const turnoSeleccionado = turnosMap[numTurno];
+    
+    // 2. Lógica de Reserva REAL
+    const { paciente_id, medico_id } = data;
+    const fecha = turnoSeleccionado.fecha;
+    const hora = turnoSeleccionado.hora;
+
+    try {
+        await createTurno(medico_id, paciente_id, fecha, hora); 
+        
+        // 3. Finalizar la conversación y limpiar el estado
+        await updateChatState(chatID, { paso_actual: 0, data: {} }); 
+        
+        await ctx.reply(`✅ ¡Turno reservado con éxito para el ${fecha} a las ${hora}! Escribe /start para comenzar de nuevo.`);
+
+    } catch (error) {
+        console.error('❌ ERROR al crear el turno:', error);
+        await ctx.reply('❌ Hubo un error al intentar reservar el turno. Por favor, intente de nuevo o escriba /start.');
+        await updateChatState(chatID, { paso_actual: 0, data: {} }); 
     }
 }
             
-            // --- Próximo Paso: 5 (Esperando Fecha y Hora) ---
+            // ---Fin del flujo ---
 
         } catch (error) {
             console.error('Error general en bot.on(\'text\'):', error.message);

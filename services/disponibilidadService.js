@@ -94,11 +94,47 @@ export async function getDisponibilidad(medicoId, fecha) {
             fin: disponibilidadRegular[0].hora_fin 
         };
     }
+// services/disponibilidadService.js (Parte Final CORREGIDA)
 
-    // 4. Generar slots disponibles a partir del rango horario
-    if (rangoHorario && rangoHorario.inicio && rangoHorario.fin) {
-        return generarSlots(rangoHorario.inicio, rangoHorario.fin, turnosReservados);
-    }
+// ... (Todo el código de getDisponibilidad, generarSlots, etc. se mantiene igual) ...
 
-    return [];
+    // 4. Generar slots disponibles a partir del rango horario
+    if (rangoHorario && rangoHorario.inicio && rangoHorario.fin) {
+        return generarSlots(rangoHorario.inicio, rangoHorario.fin, turnosReservados);
+    }
+
+    return [];
+} 
+
+/**
+ * Obtiene los slots de disponibilidad para un médico durante los próximos 7 días,
+ * excluyendo el día de hoy.
+ * @param {number} medicoId - ID del médico.
+ * @returns {Array<Object>} - Array de objetos {fecha: 'YYYY-MM-DD', diaSemana: 'Lunes', horarios: ['HH:MM']}
+ */
+export async function getDisponibilidadProximosDias(medicoId) {
+    const resultados = [];
+    const HOY = new Date();
+    
+    // Iterar sobre los próximos 7 días (empezando por mañana)
+    for (let i = 1; i <= 7; i++) {
+        const fechaIteracion = new Date(HOY);
+        fechaIteracion.setDate(HOY.getDate() + i);
+        
+        // Formato YYYY-MM-DD para la consulta SQL
+        const fechaSQL = fechaIteracion.toISOString().split('T')[0];
+        const diaSemanaNombre = getDiaSemanaNombre(fechaIteracion.getDay()); 
+        
+        // Llamada a tu función existente
+        const horariosDisponibles = await getDisponibilidad(medicoId, fechaSQL);
+        
+        if (horariosDisponibles.length > 0) {
+            resultados.push({
+                fecha: fechaSQL,
+                diaSemana: diaSemanaNombre,
+                horarios: horariosDisponibles
+            });
+        }
+    }
+    return resultados;
 }
