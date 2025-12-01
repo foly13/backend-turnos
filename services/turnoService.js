@@ -16,8 +16,12 @@ export async function createTurno(medicoId, pacienteId, fecha, hora) {
 export async function getTurnosActivosByPaciente(pacienteId) {
     const query = `
         SELECT 
-            t.id AS turno_id, t.fecha, t.hora, t.medico_id,
-            m.nombre AS medico_nombre, m.especialidad
+            t.id AS turno_id, 
+            DATE_FORMAT(t.fecha, '%Y-%m-%d') AS fecha_formateada,  -- ⬅️ CLAVE: Formatear la fecha
+            TIME_FORMAT(t.hora, '%H:%i') AS hora_formateada,    -- ⬅️ CLAVE: Formatear la hora
+            t.medico_id,
+            m.nombre AS medico_nombre, 
+            m.especialidad
         FROM 
             turnos t
         JOIN 

@@ -57,7 +57,7 @@ export function registerBotHandlers(bot) {
                 const nuevoPacienteId = await createPaciente(nombreCompleto, dniNuevo);
 
                 await updateChatState(chatID, { paso_actual: 2, data: { paciente_id: nuevoPacienteId, nombre: nombreCompleto } });
-                await ctx.reply(`✅ ¡Registro exitoso, *${nombreCompleto}*! ${mainMenu()}`);
+                await ctx.reply(`✅ ¡Registro exitoso, ${nombreCompleto}! ${mainMenu()}`);
             }
 
            // --- PASO 2: ESPERANDO OPCIÓN DEL MENÚ ---
@@ -108,8 +108,8 @@ else if (paso === 2) {
         turnosActivos.forEach((turno, index) => {
             const num = index + 1;
            // ⬅️ CORRECCIÓN CLAVE DE FECHA/HORA: Aseguramos que solo mostramos la fecha (turno.fecha) y 
-            // la hora con solo minutos (turno.hora.substring(0, 5)).
-            const fechaHoraDisplay = `${turno.fecha} ${turno.hora.substring(0, 5)}`; 
+            // ⬅️ CLAVE: Usar los campos formateados del servicio
+            const fechaHoraDisplay = `${turno.fecha_formateada} ${turno.hora_formateada}`;
             
             // Formato: 1. *Dra. López* (Clínica Médica) - 2025-12-03 15:00
             listaTurnos += `${num}. *${turno.medico_nombre}* (${turno.especialidad}) - ${fechaHoraDisplay}\n`;
@@ -119,8 +119,8 @@ else if (paso === 2) {
                 id: turno.turno_id,
                 medico_id: turno.medico_id,
                 medico_nombre: turno.medico_nombre,
-                fecha: turno.fecha,
-                hora: turno.hora.substring(0, 5)
+                fecha: turno.fecha_formateada, 
+                hora: turno.hora_formateada
             };
         });
 
