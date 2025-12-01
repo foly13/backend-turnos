@@ -1,5 +1,4 @@
 // routes/telegramLogic.js
-/// routes/telegramLogic.js
 // Lógica que se registra en el bot (importado indirectamente a través de server.js)
 
 // ⬅️ ¡CORRECCIÓN CLAVE: Importar la instancia activa del bot!
@@ -12,7 +11,7 @@ import { getTodasEspecialidades, getMedicosByEspecialidad } from '../services/me
 // ⬅️ Importar las nuevas funciones de turno (se quita updateTurno)
 import { createTurno, getTurnosActivosByPaciente, cancelTurno } from '../services/turnoService.js'; 
 // 🚨 CORRECCIÓN CLAVE: Se añade la importación de la función para obtener horarios por día
-import { getDisponibilidadProximosDias, getDiasDisponiblesByMedico, getDisponibilidadByMedicoAndFecha } from '../services/disponibilidadService.js';
+import { getDisponibilidadProximosDias, getDiasDisponiblesByMedico } from '../services/disponibilidadService.js';
 
 // Se mantiene esta función, pero cambiará su uso
 const mainMenu = () => {
@@ -258,7 +257,7 @@ else if (paso === 4) {
     const fechaSeleccionada = diasDispMap[numDia];
     
     // 🚨 CORRECCIÓN CLAVE: Usamos la función de disponibilidad correcta importada
-    const horarios = await getDisponibilidadByMedicoAndFecha(medicoId, fechaSeleccionada); 
+    const horarios = await getDisponibilidadProximosDias(medicoId, fechaSeleccionada);
     
     if (horarios && horarios.length > 0) {
         let listaHorarios = `Día ${fechaSeleccionada}. Elija el *número* del **horario**:\n`;
