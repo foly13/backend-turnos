@@ -1,5 +1,6 @@
 // services/disponibilidadService.js
-import db from '../db.js';
+
+import { pool } from '../db.js';
 
 // Duración de cada turno en minutos
 const DURACION_TURNO_MINUTOS = 30; 
@@ -51,14 +52,14 @@ export async function getDisponibilidad(medicoId, fecha) {
     const diaSemana = getDiaSemanaNombre(date.getDay());
     
     // 1. Obtener turnos ya reservados para esa fecha
-    const [turnos] = await db.query(
+    const [turnos] = await pool.query(
         'SELECT hora FROM turnos WHERE medico_id = ? AND fecha = ? AND estado <> "cancelado"', 
         [medicoId, fecha]
     );
     const turnosReservados = turnos.map(t => t.hora.toString());
 
     // 2. Revisar si hay excepción (anula el horario regular)
-    const [excepciones] = await db.query(
+    const [excepciones] = await pool.query(
         'SELECT disponible, hora_inicio, hora_fin FROM excepciones_disponibilidad WHERE medico_id = ? AND fecha = ?',
         [medicoId, fecha]
     );
@@ -78,7 +79,7 @@ export async function getDisponibilidad(medicoId, fecha) {
 
     } else {
         // 3. Si no hay excepción, buscar horario regular
-        const [disponibilidadRegular] = await db.query(
+        const [disponibilidadRegular] = await pool.query(
             'SELECT hora_inicio, hora_fin FROM disponibilidades WHERE medico_id = ? AND dia_semana = ?',
             [medicoId, diaSemana]
         );
